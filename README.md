@@ -1,2 +1,1 @@
-# LU3MA122
-# VoyageSpatial
+# Voyage Spatial

@@ -43,6 +43,12 @@ class Sonde():
     def filt_p(self, potentials):
         return
 
+def a(sondeCoord, planetArray):
+    acceleration = 0
+    for i in range(planetArray.size):
+        acceleration += G * planetArray[i].m * (planetArray[i].coord - sondeCoord)/ np.linalg.norm(planetArray[i].coord - sondeCoord)**3
+    return acceleration
+
 def derivee_u (u, t, planet) :
     # Initialisation de la dérivée
     du = np.empty(u.shape)
@@ -79,8 +85,7 @@ def RK4(u_ini, derivee, planet, T, h):
     return t, u
 
 
-
-def leapfrog(u_ini, planet, T, h):
+def leapfrog(u_ini, sonde, planetArray, T, h):
     N = int(T/h)
     t = np.linspace(0, T, N)
 
@@ -96,51 +101,53 @@ def leapfrog(u_ini, planet, T, h):
 
     #a = lambda r: G * planet.m * (planet.coord - r)/ np.linalg.norm(planet.coord - r)**3
 
-
     for i in range(N - 1):
 
         #4th order Yoshida integrator
         
         r1 = u[:2, i] + c[0] * u[2:4, i] * h
-        v1 = u[2:4, i] + d[0] * a(r1) * h
+        v1 = u[2:4, i] + d[0] * a(r1, planetArray) * h
 
         r2 = r1 + c[1] * v1 * h
-        v2 = v1 + d[1] * a(r2) * h
+        v2 = v1 + d[1] * a(r2, planetArray) * h
 
         r3 = r2 + c[2] * v2 * h
-        v3 = v2 + d[2] * a(r3) * h
+        v3 = v2 + d[2] * a(r3, planetArray) * h
 
         u[:2, i+1] = r3 + c[3] * v3 * h
         u[2:4, i+1] = v3 
 
     return t, u
 
-massPlanet = {"Terre" : 1e24, "Lune" : 7.6e22} #kg
+massPlanet = {"Terre" : 1e24, "Lune" : 7.6e24} #kg
 dTerreLune = 384400 #km
 
 def main():
 
     terre = Planet(massPlanet["Terre"], [0, 0])
     lune = Planet(massPlanet["Lune"], [dTerreLune, 0])
+
+    planetArray = np.array([terre, lune])
+
     R = 35000 #km
     vyIni = np.sqrt(G * terre.m / R)
-    sonde = Sonde([R, 0], [0, vyIni], [0, 0])
+    sonde = Sonde([dTerreLune/2, 0], [0, vyIni], [0, 0])
     # sonde = Sonde([100, 100], [-1, 1], [0, 0])
     T = 30
-    h = 1e-2
+    h = 1e-3
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
-
-
 
     #RK4
     #t, u = RK4(init, derivee_u, terre, T, h)
 
     #Leapfrog
-    t, u = leapfrog(init, terre, T, h)
+    t, u = leapfrog(init, sonde, planetArray, T, h)
 
-    plt.plot(terre.x, terre.y, 'ro', label="earth")
+    for i in range(planetArray.size):
+      plt.plot(planetArray[i].x, planetArray[i].y, 'ro', label=str(i))
+
     plt.plot(sonde.x, sonde.y, 'bo', label='sonde start')
-    plt.plot(sonde.x, sonde.y, 'b*', label='sonde end')
+    plt.plot(u[0, -1], u[1, -1], 'b*', label='sonde end')
     plt.plot(u[0, :], u[1, :])
 
     # Ep = np.empty(N)
@@ -159,7 +166,7 @@ def main():
     # # plt.plot(t, normalizedEc, label='Ec')
     # Em = Ec + Ep 
     # plt.plot(t, Em, label="Em")
-    # #plt.ylim(np.min(Em)-1, np.max(Em)+1)
+    plt.ylim(-200000, 200000)
 
     plt.legend()
     # plt.xlabel("x")
