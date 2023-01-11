@@ -7,8 +7,9 @@ from functools import partial
 
 class Planet():
 
-    def __init__(self, m, coord_init, a=0, perihelie=0, e=0): #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
+    def __init__(self, name, m, coord_init, a=0, perihelie=0, e=0): #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
         self.m = m
+        self.name = name
         #self.radius = radius
         self.coord = np.array(coord_init)
         self.a = a
@@ -32,7 +33,8 @@ mass = {"mercure" : 3.285e23,
         "jupiter" : 1.898e27,
         "saturne" : 5.683e26,
         "uranus" : 8.681e25,
-        "neptune" : 1.024e26}
+        "neptune" : 1.024e26,   
+        "soleil" : 1.989e30}
 a = {"mercure" : 57.909083e6,
     "venus" : 108.210e6,
     "terre" : 149.598e6,
@@ -66,10 +68,11 @@ coordInit = {"mercure" : [perihelie["mercure"],0],
             "uranus" : [perihelie["uranus"],0],
             "neptune" : [perihelie["neptune"],0]}
 
-mercure = Planet(mass["mercure"], coordInit["mercure"], a["mercure"], perihelie["mercure"], e["mercure"])
-venus = Planet(mass["venus"], coordInit["venus"], a["venus"], perihelie["venus"], e["venus"])
-terre = Planet(mass["terre"], coordInit["terre"], a["terre"], perihelie["terre"], e["terre"])
-mars = Planet(mass["mars"], coordInit["mars"], a["mars"], perihelie["mars"], e["mars"])
-jupiter = Planet(mass["jupiter"], coordInit["jupiter"], a["jupiter"], perihelie["jupiter"], e["jupiter"])
-uranus = Planet(mass["uranus"], coordInit["uranus"], a["uranus"], perihelie["uranus"], e["uranus"])
-neptune = Planet(mass["neptune"], coordInit["neptune"], a["neptune"], perihelie["neptune"], e["neptune"])
+mercure = Planet("mercure", mass["mercure"], coordInit["mercure"], a["mercure"], perihelie["mercure"], e["mercure"])
+venus = Planet("venus", mass["venus"], coordInit["venus"], a["venus"], perihelie["venus"], e["venus"])
+terre = Planet("terre", mass["terre"], coordInit["terre"], a["terre"], perihelie["terre"], e["terre"])
+mars = Planet("mars", mass["mars"], coordInit["mars"], a["mars"], perihelie["mars"], e["mars"])
+jupiter = Planet("jupiter", mass["jupiter"], coordInit["jupiter"], a["jupiter"], perihelie["jupiter"], e["jupiter"])
+saturne = Planet("saturne", mass["saturne"], coordInit["saturne"], a["saturne"], perihelie["saturne"], e["saturne"])
+uranus = Planet("uranus", mass["uranus"], coordInit["uranus"], a["uranus"], perihelie["uranus"], e["uranus"])
+neptune = Planet("neptune", mass["neptune"], coordInit["neptune"], a["neptune"], perihelie["neptune"], e["neptune"])
