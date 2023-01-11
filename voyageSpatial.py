@@ -5,12 +5,27 @@ G = 6.674*1e-11
 
 class Planet():
 
-    def __init__(self, m, coord, v=0, radius=0):
+    def __init__(self, m, coord_init, a=0, perihelie=0, e=0):
+        #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
         self.m = m
-        self.radius = np.array(radius)
-        self.coord = np.array(coord)
-        self.x = coord[0]
-        self.y = coord[1]
+        self.coord = coord_init
+        self.axe = a # demi-grand axe
+        self.excentricite = e
+        self.perihelie = perihelie
+        self.u = -self.a+ self.perihelie
+        self.b = self.a*np.sqrt(1-self.e**2)
+        #self.radius = np.norm.linalg(self.coord)
+        #self.vitesse = np.sqrt(G*m*((2*self.axe - self.radius)/(self.axe*self.radius)))
+
+    def planetVelocity(self, time): # time un array des temps 
+        vitesse = np.zeros(len(time))
+        for i in range(len(time)) :
+            self.coord = [self.u+self.a*np.cos(time[i]), self.b*np.sin(time[i])]
+            rayon = np.norm.linalg(self.coord)
+            vitesse[i] = np.sqrt(G*m*((2*self.axe - self.radius)/(self.axe*self.radius)))
+        return vitesse  
+
+
     
 class Sonde():
 
