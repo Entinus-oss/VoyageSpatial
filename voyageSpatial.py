@@ -66,7 +66,7 @@ def derivee_u (u, t, planet) :
     # Initialisation de la dérivée
     du = np.empty(u.shape)
     norm = ((planet.x-u[0])**2+(planet.y-u[1])**2)**(1/2)
-    # D ́eriv ́ee
+
     du[0] = u[2]
     du[1] = u[3]
     du[2] = G * planet.m * (planet.x- u[0])/ norm**3
@@ -74,9 +74,8 @@ def derivee_u (u, t, planet) :
 
     return du
 
-def RK4(u_ini, sonde, derivee, planet, T, h):
-
-    N = int(T/h)
+def RK4(u_ini, sonde, derivee, planet, T, N):
+    h = T/N
     t = np.linspace(0, T, N)
 
     # Initialisation du tableau
@@ -202,29 +201,28 @@ def main():
     terre = Planet(massPlanet["Terre"], [0, 0])
     lune = Planet(massPlanet["Lune"], [dTerreLune, 0])
 
-    planetArray = np.array([terre])
+    planetArray = np.array([terre, lune])
 
     R = 35000 #km
     vyIni = np.sqrt(G * terre.m / R)
-    sonde = Sonde([R, 0], [0, vyIni], [0, 0])
+    sonde = Sonde([dTerreLune, 0], [0, vyIni], [0, 0])
     # sonde = Sonde([100, 100], [-1, 1], [0, 0])
-    T = 30
-    h = 1e-4
-    N = int(T/h)
+    T = 50
+    N = 100000
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
 
     #RK4
-    t, u = RK4(init, sonde, derivee_u, terre, T, h)
+    t, u = RK4(init, sonde, derivee_u, terre, T, N)
 
     #Leapfrog
     #t, u = leapfrog(init, sonde, planetArray, T, h)
 
-    # for i in range(planetArray.size):
-    #   plt.plot(planetArray[i].x, planetArray[i].y, 'ro', label=str(i))
+    for i in range(planetArray.size):
+      plt.plot(planetArray[i].x, planetArray[i].y, 'ro', label=str(i))
 
-    # plt.plot(sonde.x, sonde.y, 'bo', label='sonde start')
-    # plt.plot(u[0, -1], u[1, -1], 'b*', label='sonde end')
-    # plt.plot(u[0, :], u[1, :])
+    plt.plot(sonde.x, sonde.y, 'bo', label='sonde start')
+    plt.plot(u[0, -1], u[1, -1], 'b*', label='sonde end')
+    plt.plot(u[0, :], u[1, :])
 
     Em = np.empty(N)
 
@@ -239,8 +237,8 @@ def main():
     # # plt.plot(t, normalizedEp, label='Ep')
     # # plt.plot(t, normalizedEc, label='Ec')
 
-    plt.plot(t, Em, label="Em")
-    plt.ylim(-200000, 200000)
+    # plt.plot(t, Em, label="Em")
+    #plt.ylim(-200000, 200000)
 
     plt.legend()
     # plt.xlabel("x")

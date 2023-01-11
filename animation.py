@@ -25,8 +25,6 @@ animation6 = FuncAnimation(figure, partial(pl.uranus.actualisation_position, sca
 animation7 = FuncAnimation(figure, partial(pl.neptune.actualisation_position, scatter = sc7), frames = np.arange(0, 2*np.pi, 0.1),interval = 10 )
 
 t = np.linspace(0, 2*np.pi, 100)
-fig = plt.figure()
-ax = fig.add_subplot()
 plt.plot(pl.mercure.u+pl.mercure.a*np.cos(t) , pl.mercure.b*np.sin(t), label="mercure")
 plt.plot(pl.venus.u+pl.venus.a*np.cos(t) , pl.venus.b*np.sin(t), label="venus")
 plt.plot(pl.terre.u+pl.terre.a*np.cos(t) , pl.terre.b*np.sin(t), label="terre")
@@ -38,7 +36,6 @@ plt.plot(pl.neptune.u+pl.neptune.a*np.cos(t) , pl.neptune.b*np.sin(t), label="ne
 plt.scatter([0],[0], color="red")
 plt.grid(color='lightgray',linestyle='--')
 
-ax.set_aspect('equal')
 plt.legend()
 plt.show()
 
