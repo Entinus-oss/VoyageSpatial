@@ -127,20 +127,21 @@ def main():
     terre = Planet(massPlanet["Terre"], [0, 0])
     lune = Planet(massPlanet["Lune"], [dTerreLune, 0])
 
+
     planetArray = np.array([terre])
 
-    R = 3.5 * 1e7 # m
-    V = 1.708 * 1e3 # m
-    #vyIni = np.sqrt(G * terre.m / R)
-    sonde = Sonde([R, 20], [-V, V], [0, 0])
-    # sonde = Sonde([100, 100], [-1, 1], [0, 0])
+    R = 3.5 * 1e7 # m 
+    V = 1.708 * 1e9 # m
+    vyIni = np.sqrt(G * terre.m / R)
+    sonde = Sonde([1e5, R], [-vyIni, vyIni], [0, 0])
+    #sonde = Sonde([100, 100], [-1, 1], [0, 0])
     T = 10
     h = 1e-4
     N = int(T/h)
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
 
     #RK4
-    #t, u = RK4(init, derivee_u, terre, T, h)
+    #t, u = RK4(init, sonde, terre, T, h)
 
     #Leapfrog
     t, u = leapfrog(init, sonde, planetArray, T, h)
@@ -150,7 +151,7 @@ def main():
 
     plt.plot(sonde.x, sonde.y, 'bo', label='sonde start')
     plt.plot(u[0, -1], u[1, -1], 'b*', label='sonde end')
-    plt.plot(u[0, :], u[1, :])
+    plt.plot(u[0, :], u[1, :], label = "trajectoire")
 
     # Ep = np.empty(N)
     # Ec = np.empty(N)
