@@ -1,30 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import planetes as pl
 
 G = 6.674*1e-11
 
 class Planet():
 
-    def __init__(self, m, coord_init, a=0, perihelie=0, e=0):
-        #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
-        self.m = m
-        self.coord = coord_init
-        self.axe = a # demi-grand axe
-        self.excentricite = e
-        self.perihelie = perihelie
-        self.u = -self.a+ self.perihelie
-        self.b = self.a*np.sqrt(1-self.e**2)
-        #self.radius = np.norm.linalg(self.coord)
-        #self.vitesse = np.sqrt(G*m*((2*self.axe - self.radius)/(self.axe*self.radius)))
+    def __init__(self, mass, coord, radius=0):
+        self.mass = mass
+        self.radius = radius
 
-    def planetVelocity(self, time): # time un array des temps 
-        vitesse = np.zeros(len(time))
-        for i in range(len(time)) :
-            self.coord = [self.u+self.a*np.cos(time[i]), self.b*np.sin(time[i])]
-            rayon = np.norm.linalg(self.coord)
-            vitesse[i] = np.sqrt(G*m*((2*self.axe - self.radius)/(self.axe*self.radius)))
-        return vitesse  
-
+        self.coord = coord
+        self.x = self.coord[0]
+        self.y = self.coord[1]
 
     
 class Sonde():
@@ -39,7 +27,7 @@ class Sonde():
         self.vx = speed[0]
         self.vy = speed[1]
 
-        self.m = mass
+        self.mass = mass
         self.potentials = np.array([])
         self.activePotentials = np.array([])
 
@@ -48,12 +36,12 @@ class Sonde():
         return d
 
     def ep(self, planet):
-        pot = G * self.m * planet.m / (self.distance(planet))
+        pot = G * self.mass * planet.mass / (self.distance(planet))
         np.append(self.potentials, pot)
         return pot
 
     def ec(self):
-        return 1/2 * self.m * np.linalg.norm(self.speed)**2
+        return 1/2 * self.mass * np.linalg.norm(self.speed)**2
 
     def filt_p(self, potentials):
         return
@@ -61,7 +49,7 @@ class Sonde():
 def a(sondeCoord, planetArray):
     acceleration = 0
     for i in range(planetArray.size):
-        acceleration += G * planetArray[i].m * (planetArray[i].coord - sondeCoord)/ np.linalg.norm(planetArray[i].coord - sondeCoord)**3
+        acceleration += G * planetArray[i].mass * (planetArray[i].coord - sondeCoord)/ np.linalg.norm(planetArray[i].coord - sondeCoord)**3
     return acceleration
 
 def derivee_u (u, t, planet) :
@@ -71,8 +59,8 @@ def derivee_u (u, t, planet) :
     # D ́eriv ́ee
     du[0] = u[2]
     du[1] = u[3]
-    du[2] = G * planet.m * (planet.x- u[0])/ norm**3
-    du[3] = G * planet.m * (planet.x - u[1])/ norm**3
+    du[2] = G * planet.mass * (planet.x- u[0])/ norm**3
+    du[3] = G * planet.mass * (planet.x - u[1])/ norm**3
 
     return du
 
@@ -85,20 +73,20 @@ def RK4(u_ini, derivee, planet, T, h):
     u = np.empty((4, N)) # Condition initiale
     u[:, 0] = u_ini
 
-    for i in range(N - 1):
+    for i in range(N-1):
 
-        d1 = derivee(u[:, i], t[i], planet)
-        d2 = derivee(u[:, i] + d1 * h/2, t[i] + h/2, planet)
-        d3 = derivee(u[:, i] + d2 * h/2, t[i] + h/2, planet)
-        d4 = derivee(u[:, i] + d3 * h, t[i] + h, planet)
+        d1 = derivee_u(u[:, i], t[i], planet)
+        d2 = derivee_u(u[:, i] + d1 * h/2, t[i] + h/2, planet)
+        d3 = derivee_u(u[:, i] + d2 * h/2, t[i] + h/2, planet)
+        d4 = derivee_u(u[:, i] + d3 * h, t[i] + h, planet)
         u[:, i + 1] = u[:, i] + h / 6 * (d1 + 2 * d2 + 2 * d3 + d4)
 
         if np.linalg.norm(u[:2, i] - planet.coord) < planet.radius:
             t = np.linspace(0, T, i+1)
             break
 
+        print(i, "/", N-2, end="\r")
     return t, u
-
 
 def leapfrog(u_ini, sonde, planetArray, T, h):
     N = int(T/h)
@@ -114,9 +102,7 @@ def leapfrog(u_ini, sonde, planetArray, T, h):
     c = np.array([w1 / 2, (w0 + w1) / 2, (w0 + w1) / 2, w1/2])
     d = np.array([w1, w0, w1])
 
-    #a = lambda r: G * planet.m * (planet.coord - r)/ np.linalg.norm(planet.coord - r)**3
-
-    for i in range(N - 1):
+    for i in range(N-1):
 
         #4th order Yoshida integrator
         
@@ -132,31 +118,49 @@ def leapfrog(u_ini, sonde, planetArray, T, h):
         u[:2, i+1] = r3 + c[3] * v3 * h
         u[2:4, i+1] = v3 
 
+        for planet in planetArray:
+            dist = np.linalg.norm(u[:2, i] - planet.coord)
+            if dist <= planet.radius:
+                t = np.linspace(0, T, i+1)
+                print("Too close from ", planet.name, " : ", dist, "/", planet.radius)
+                break
+
+        print(i, "/", N-2, end="\r")
     return t, u
 
 massPlanet = {"Terre" : 1e24, "Lune" : 7.6e24} #kg
-dTerreLune = 384400 #km
+dTerreLune = 3.84400 * 1e4 # m
+vMax = 1.7 * 1e4 # km/s
+
+
+day = 86400 # s
+hour = 3600 # s
+minute = 60 # s
+year = 365 * day
 
 def main():
+    theta = 3 * np.pi / 4 # 0 < theta < 2 * np.pi
+    vDir = np.array([np.cos(theta), -np.sin(theta)])
 
-    terre = Planet(massPlanet["Terre"], [0, 0])
-    lune = Planet(massPlanet["Lune"], [dTerreLune, 0])
+    terre = Planet(massPlanet["Terre"], [0, 0])#, pl.terre.radius)
+    lune = Planet(massPlanet["Lune"], [dTerreLune, 0])#, 1.7 * 1e6)
 
-    planetArray = np.array([terre, lune])
+    planetArray = np.array([terre])
 
-    R = 35000 #km
-    vyIni = np.sqrt(G * terre.m / R)
-    sonde = Sonde([dTerreLune/2, 0], [0, vyIni], [0, 0])
-    # sonde = Sonde([100, 100], [-1, 1], [0, 0])
-    T = 30
-    h = 1e-3
+    R = 35000 * 1e3 #m
+    vyIni = np.sqrt(G * terre.mass / R)
+    # sonde = Sonde([dTerreLune/2, 0], vMax * vDir, [0, 0])
+    sonde = Sonde([R, 0], [300, vyIni], [0, 0])
+    T = 10 * day # s
+    h = 60 # s
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
 
+    print("x0 :", sonde.coord, "v0 :", sonde.speed)
     #RK4
-    #t, u = RK4(init, derivee_u, terre, T, h)
+    t, u = RK4(init, derivee_u, terre, T, h)
 
     #Leapfrog
-    t, u = leapfrog(init, sonde, planetArray, T, h)
+    #t, u = leapfrog(init, sonde, planetArray, T, h)
 
     for i in range(planetArray.size):
       plt.plot(planetArray[i].x, planetArray[i].y, 'ro', label=str(i))
@@ -181,11 +185,12 @@ def main():
     # # plt.plot(t, normalizedEc, label='Ec')
     # Em = Ec + Ep 
     # plt.plot(t, Em, label="Em")
-    plt.ylim(-200000, 200000)
+    #plt.ylim(-200000, 200000)
 
     plt.legend()
-    # plt.xlabel("x")
-    # plt.ylabel("y")
+    plt.xlabel("x [m]")
+    plt.ylabel("y [m]")
+    plt.grid()
     plt.show()
     return
 

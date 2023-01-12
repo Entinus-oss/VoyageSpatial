@@ -4,65 +4,42 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from functools import partial
 
-G = 6.674*1e-11
+G = 6.674 * 1e-11 # N * m^2 / kg^2
+M = 1.989 * 1e30 #kg
 
 class Planet():
 
-    def __init__(self, m, coord_init, a=0, perihelie=0, e=0): #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
-        self.m = m
+    def __init__(self, name, mass, coord_init, a, perihelie, e, radius): #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
+        self.name = name
+        
         self.coord = np.array(coord_init)
+        
+        self.mass = mass
+        self.radius = radius
         self.axe = a
         self.perihelie = perihelie
         self.e = e
-        self.orbit = []
 
-        self.u = -self.axe + self.perihelie
+        self.orbit = []
+        self.u = - self.axe + self.perihelie
         self.b = self.axe * np.sqrt(1 - self.e**2)
-        self.period = 2 * np.pi * np.sqrt(self.axe**3 / self.m / G)
+
+        self.period = 2 * np.pi * np.sqrt(self.axe**3 / (M + self.mass) / G)
         self.omega = 2 * np.pi / self.period
 
-    # def planetVelocity(self, time): # time un array des temps 
-    #     vitesse = np.ones(2)
-        
-    #     self.coord = [self.u + self.axe * np.cos(time), self.b * np.sin(time)]
-    #     radius = np.linalg.norm(self.coord)
-    #     velocityScalar = np.sqrt(G * self.m * ((2 * self.axe - radius)/(self.axe * radius)))
+    def calcOrbit(self, time):
 
-    #     vitesse[0] = velocityScalar * -self.axe * np.sin(time)
-    #     vitesse[1] = velocityScalar * np.cos(time)
-    #     vitesse = vitesse/np.linalg.norm(vitesse)
-
-    #     return vitesse
-
-    # def actualisation_position0(self, time, scatter):
-    #     # Calcule les coordonnées grâce à la vitesse 
-         
-    #     actualisationVitesse = self.planetVelocity(time)
-
-    #     self.coord = [self.coord[0] + actualisationVitesse[0], self.coord[1] + actualisationVitesse[1]]
-    #     scatter.set_offsets(self.coord)
-
-    def actualisation_position(self, time, T, N):
-        # Calcule les coordonnées grâce à la vitesse 
-        #self.perimeter = np.pi*(3*(self.axe+self.b) - np.sqrt(3*self.axe + self.b)*(self.axe * 3*self.b))
-        time = np.linspace(0, T, N)
         for i in range(time.size):
-            print("time", time[i])
             self.coord = np.array([self.u + self.axe * np.cos(self.omega * time[i]), self.b * np.sin(self.omega * time[i])])
             self.orbit.append(self.coord)
-            print("coord", self.coord)
 
 
     def animate(self, frame, scatter):  
-        # print(frame)
-        # print(len(self.orbit))
+
         coord = self.orbit[frame]
-        #print("coord", coord)
         scatter.set_offsets(coord)
-        #return scatter
 
 
-M = 5.972e24 
 mass = {"mercure" : 3.285e23, # kg 
         "venus" : 4.867e24,
         "terre" : 5.972e24,
@@ -71,6 +48,16 @@ mass = {"mercure" : 3.285e23, # kg
         "saturne" : 5.683e26,
         "uranus" : 8.681e25,
         "neptune" : 1.024e26}
+
+radius = {"mercure" : 2.439 * 1e6, # m
+        "venus" : 6.051 * 1e6,
+        "terre" : 6.371 * 1e6,
+        "mars" : 3.389 * 1e6,
+        "jupiter" :6.991 * 1e7,
+        "saturne" : 5.823 * 1e7,
+        "uranus" : 2.5362 * 1e7,
+        "neptune" : 2.462 * 1e7}
+
 a = {"mercure" : 57.909083e9, # m
     "venus" : 108.210e9,
     "terre" : 149.598e9,
@@ -79,6 +66,7 @@ a = {"mercure" : 57.909083e9, # m
     "saturne" : 1432.041e9,
     "uranus" : 2867.043e9,
     "neptune" : 4514.953e9}
+
 e = {"mercure" : 0.2056, # sans dimension 
         "venus" : 0.0068,
         "terre" : 0.0167,
@@ -87,7 +75,8 @@ e = {"mercure" : 0.2056, # sans dimension
         "saturne" : 0.0520,
         "uranus" : 0.0469,
         "neptune" : 0.0097}
-perihelie = {"mercure" : 46e9, # km
+
+perihelie = {"mercure" : 46e9, # m
             "venus" : 107.480e9,
             "terre" : 147.095e9,
             "mars" : 206.650e9,
@@ -95,6 +84,7 @@ perihelie = {"mercure" : 46e9, # km
             "saturne" : 1357.554e9,
             "uranus" : 2732.696e9,
             "neptune" : 4471.050e9}
+
 coordInit = {"mercure" : [perihelie["mercure"],0],
             "venus" : [perihelie["venus"],0],
             "terre" : [perihelie["terre"],0],
@@ -104,10 +94,13 @@ coordInit = {"mercure" : [perihelie["mercure"],0],
             "uranus" : [perihelie["uranus"],0],
             "neptune" : [perihelie["neptune"],0]}
 
-mercure = Planet(mass["mercure"], coordInit["mercure"], a["mercure"], perihelie["mercure"], e["mercure"])
-venus = Planet(mass["venus"], coordInit["venus"], a["venus"], perihelie["venus"], e["venus"])
-terre = Planet(mass["terre"], coordInit["terre"], a["terre"], perihelie["terre"], e["terre"])
-mars = Planet(mass["mars"], coordInit["mars"], a["mars"], perihelie["mars"], e["mars"])
-jupiter = Planet(mass["jupiter"], coordInit["jupiter"], a["jupiter"], perihelie["jupiter"], e["jupiter"])
-uranus = Planet(mass["uranus"], coordInit["uranus"], a["uranus"], perihelie["uranus"], e["uranus"])
-neptune = Planet(mass["neptune"], coordInit["neptune"], a["neptune"], perihelie["neptune"], e["neptune"])
+mercure = Planet("mercure", mass["mercure"], coordInit["mercure"], a["mercure"], perihelie["mercure"], e["mercure"], radius["mercure"])
+venus = Planet("venus", mass["venus"], coordInit["venus"], a["venus"], perihelie["venus"], e["venus"], radius["venus"])
+terre = Planet("terre", mass["terre"], coordInit["terre"], a["terre"], perihelie["terre"], e["terre"], radius["terre"])
+mars = Planet("mars", mass["mars"], coordInit["mars"], a["mars"], perihelie["mars"], e["mars"], radius["mars"])
+jupiter = Planet("jupiter", mass["jupiter"], coordInit["jupiter"], a["jupiter"], perihelie["jupiter"], e["jupiter"], radius["jupiter"])
+saturne = Planet("saturne", mass["saturne"], coordInit["saturne"], a["saturne"], perihelie["saturne"], e["saturne"], radius["saturne"])
+uranus = Planet("uranus", mass["uranus"], coordInit["uranus"], a["uranus"], perihelie["uranus"], e["uranus"], radius["uranus"])
+neptune = Planet("neptune", mass["neptune"], coordInit["neptune"], a["neptune"], perihelie["neptune"], e["neptune"], radius["neptune"])
+
+planets = np.array([mercure, venus, terre, mars, jupiter, saturne, uranus, neptune])
