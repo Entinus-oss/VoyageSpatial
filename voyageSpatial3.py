@@ -143,6 +143,7 @@ vMax = 1.7 * 1e4 # km/s
 day = 86400 # s
 hour = 3600 # s
 minute = 60 # s
+week = 7 * day 
 year = 365 * day
 
 def main():
@@ -157,16 +158,14 @@ def main():
     R = 35000 * 1e3 #m
     vyIni = np.sqrt(G * terre.mass / R)
     # sonde = Sonde([dTerreLune/2, 0], vMax * vDir, [0, 0])
-    sonde = Sonde([R, 0], [300, vyIni], [0, 0])
-    T = 10 * day # s
-    h = 60 # s
+    sonde = Sonde([R, 0], [0, vyIni], [0, 0])
+    # T =  day  # s
+    #h = 60 # s
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
 
-    print("x0 :", sonde.coord, "v0 :", sonde.speed)
-
-
+    #print("x0 :", sonde.coord, "v0 :", sonde.speed)
     #Leapfrog
-    t, u = leapfrog(init, sonde, planetArray, T, h)
+    #t, u = leapfrog(init, sonde, planetArray, T, h)
 
     # for i in range(planetArray.size):
     #   plt.plot(planetArray[i].x, planetArray[i].y, 'ro', label=str(i))
@@ -174,30 +173,74 @@ def main():
     # plt.plot(sonde.x, sonde.y, 'bo', label='sonde start')
     # plt.plot(u[0, -1], u[1, -1], 'b*', label='sonde end')
     # plt.plot(u[0, :], u[1, :])
-    N = int(T/h)
-    Ep = np.empty(N)
-    Ec = np.empty(N)
+    '''Calcul de la variation d'énergie maximale sur un plot pour un T 
+    (temps d'intégration) donné en fonction du pas h'''
 
-    for i in range(u.shape[1]):
-        sonde.coord = u[:2, i]
-        sonde.speed = u[2:4, i]
-        Ep[i] = sonde.ep(planetArray)
-        Ec[i] = sonde.ec()
+    # N = int(T/h)
+    # Ep = np.empty(N)
+    # Ec = np.empty(N)
+    T = day
+    hArray = np.array([30 * minute, hour, day])
+    errArray = np.ones(len(hArray))
+    # Construction du tableau des temps 
+    timeArray = np.arange(1,500) * week 
+
+    print(hArray)
+    
+    for i in range(len(hArray)) :
+        print("\n h =", hArray[i])
+        for j in range(len(timeArray)) :
+            print("\n t =", timeArray[j])
+            t, u = leapfrog(init, sonde, planetArray, timeArray[j], hArray[i])
+            N = t.size
+
+            Ep = np.empty(N)
+            Ec = np.empty(N)
+            Em = np.empty(N)
+
+            for n in range(u.shape[1]) :
+                sonde.coord = u[:2, n]
+                sonde.speed = u[2:4, n]
+                Ep[n] = sonde.ep(planetArray)
+                Ec[n] = sonde.ec()
+                Em[n] = Ep[n] + Ec[n]
+        
+            #print(Em)  
+            EmMax = np.max(Em) 
+            EmMin = np.min(Em)
+            errArray[i] = np.abs(EmMax - EmMin)
+
+    # plt.plot(hArray, errArray, 'o', label = r" $ \vert E_{max} - E_{min} \vert $")
+        plt.plot(t, Em/Em[0], 'o-', label = "h = " + str(hArray[i]) + " T = " + str(timeArray[j]))
+    NArray = np.arange(N)
+    # print(len(NArray))
+    # print(len(Em))
+    #plt.plot(NArray, Ep, label = "énergie potentielle")
+    #plt.plot(NArray, Ec, label = "énergie cinétique")
+    #plt.plot(NArray, Em, label = 'énergie mécanique') 
+    #plt.title("Écart max entre valeurs de l'énergie mécanique pour 200 jours")
+    #plt.xlabel("h")
+    #plt.ylabel('Ecart maximal entre toutes les valeurs de Em')
+    plt.grid()
+    plt.legend()
+    plt.show()
+
+    # for i in range(u.shape[1]):
+    #     sonde.coord = u[:2, i]
+    #     sonde.speed = u[2:4, i]
+    #     Ep[i] = sonde.ep(planetArray)
+    #     Ec[i] = sonde.ec()
     
     # normalizedEp = Ep / np.max(Ep)
     # normalizedEc = Ec / np.max(Ec)
 
     # plt.plot(t, Ep, label='Ep')
     # plt.plot(t, Ec, label='Ec')
-    Em = Ec + Ep 
-    plt.plot(t, Em, label="Em")
+    # Em = Ec + Ep 
+    # plt.plot(t, Em, label="Em")
     #plt.ylim(-200000, 200000)
-
-    plt.legend()
     # plt.xlabel("x [m]")
     # plt.ylabel("y [m]")
-    plt.grid()
-    plt.show()
     return
 
 if __name__ == "__main__":

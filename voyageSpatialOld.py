@@ -141,7 +141,7 @@ def main():
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
 
     #RK4
-    #t, u = RK4(init, sonde, terre, T, h)
+    #t, u = RK4(init, derivee_u, terre, T, h)
 
     #Leapfrog
     t, u = leapfrog(init, sonde, planetArray, T, h)
