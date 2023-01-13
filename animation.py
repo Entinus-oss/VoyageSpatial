@@ -8,34 +8,23 @@ import planetes as pl
 G = 6.674*1e-11
 
 figure = plt.figure()
-sc = plt.scatter(pl.mercure.coord[0], pl.mercure.coord[1])
-sc2 = plt.scatter(pl.venus.coord[0], pl.venus.coord[1])
-sc3 = plt.scatter(pl.terre.coord[0], pl.terre.coord[1])
-sc4 = plt.scatter(pl.mars.coord[0], pl.mars.coord[1])
-sc5 = plt.scatter(pl.jupiter.coord[0], pl.jupiter.coord[1])
-sc6 = plt.scatter(pl.uranus.coord[0], pl.uranus.coord[1])
-sc7 = plt.scatter(pl.neptune.coord[0], pl.neptune.coord[1])
 
-animation = FuncAnimation(figure,partial(pl.mercure.actualisation_position, scatter = sc),frames = np.arange(0, 2*np.pi, 0.1),interval = 10)
-animation2 = FuncAnimation(figure, partial(pl.venus.actualisation_position, scatter = sc2), frames = np.arange(0, 2*np.pi, 0.1),interval = 10 )
-animation3 = FuncAnimation(figure,partial(pl.terre.actualisation_position, scatter = sc3),frames = np.arange(0, 2*np.pi, 0.1),interval = 10)
-animation4 = FuncAnimation(figure, partial(pl.mars.actualisation_position, scatter = sc4), frames = np.arange(0, 2*np.pi, 0.1),interval = 10 )
-animation5 = FuncAnimation(figure,partial(pl.jupiter.actualisation_position, scatter = sc5),frames = np.arange(0, 2*np.pi, 0.1),interval = 10)
-animation6 = FuncAnimation(figure, partial(pl.uranus.actualisation_position, scatter = sc6), frames = np.arange(0, 2*np.pi, 0.1),interval = 10 )
-animation7 = FuncAnimation(figure, partial(pl.neptune.actualisation_position, scatter = sc7), frames = np.arange(0, 2*np.pi, 0.1),interval = 10 )
+animList = []
 
-t = np.linspace(0, 2*np.pi, 100)
-plt.plot(pl.mercure.u+pl.mercure.a*np.cos(t) , pl.mercure.b*np.sin(t), label="mercure")
-plt.plot(pl.venus.u+pl.venus.a*np.cos(t) , pl.venus.b*np.sin(t), label="venus")
-plt.plot(pl.terre.u+pl.terre.a*np.cos(t) , pl.terre.b*np.sin(t), label="terre")
-plt.plot(pl.mars.u+pl.mars.a*np.cos(t) , pl.mars.b*np.sin(t), label="mars")
-plt.plot(pl.jupiter.u+pl.jupiter.a*np.cos(t) , pl.jupiter.b*np.sin(t), label="jupiter")
-plt.plot(pl.uranus.u+pl.uranus.a*np.cos(t) , pl.uranus.b*np.sin(t), label="uranus")
-plt.plot(pl.neptune.u+pl.neptune.a*np.cos(t) , pl.neptune.b*np.sin(t), label="neptune")
+T, N = 2.649e9, 10000 # s, n
+time = np.linspace(0, T, N)
 
-plt.scatter([0],[0], color="red")
+t = np.linspace(0, 2*np.pi, 100) # x-absc for elliptic trajectory
+
+for planet in pl.planets:
+    planet.calcOrbit(time, np.array(planet.coord))
+    sc = plt.scatter(planet.coord[0], planet.coord[1])
+    animList.append(FuncAnimation(figure, partial(planet.animate, scatter=sc), frames=np.arange(N-1), interval = 17))
+    plt.plot(planet.u + planet.axe * np.cos(t) , planet.b * np.sin(t), label=planet.name)
+
+plt.plot(-1.131835012683988e9*1e3, -4.386495519097997e9*1e3, "go")
+plt.scatter([0],[0], color="red") # the sun
 plt.grid(color='lightgray',linestyle='--')
 
-plt.legend()
+#plt.legend()
 plt.show()
-

@@ -190,7 +190,7 @@ def main():
     for i in range(len(hArray)) :
         print("\n h =", hArray[i])
         for j in range(len(timeArray)) :
-            print("\n t =", timeArray[j])
+            print("\n t =", timeArray[j], j)
             t, u = leapfrog(init, sonde, planetArray, timeArray[j], hArray[i])
             N = t.size
 
