@@ -38,11 +38,12 @@ M = 1.989 * 1e30 #kg
 
 class Planet():
 
-    def __init__(self, name, mass, coord_init, a, perihelie, e, radius): #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
+    def __init__(self, name, mass, coordInit, a, perihelie, e, radius): #a : demi-grand axe, e: excentricité, vitesse en ration par rapport à la vitesse de la Terre
         self.name = name
         
-        self.coord = np.array(coord_init)
-        
+        self.coord = np.array(coordInit)
+        self.coordInit = np.array(coordInit)
+
         self.mass = mass
         self.radius = radius
         self.axe = a
@@ -56,20 +57,22 @@ class Planet():
         self.period = 2 * np.pi * np.sqrt(self.axe**3 / (M + self.mass) / G)
         self.omega = 2 * np.pi / self.period
 
-    def calcPhase(self, coord_init, a):
-        coordInit_norm = np.linalg.norm(coord_init)
-        aVector = np.array([a,0])
-        print(coord_init, (aVector))
-        c = coord_init - aVector
+    def calcPhase(self):
+        coordInit_norm = np.linalg.norm(self.coordInit)
+        aVector = np.array([self.axe,0])
+        c = self.coordInit - aVector
+
         c_norm = np.linalg.norm(c)
-        if np.dot(coord_init, aVector) < 0:
-            phaseInit = 2*np.pi - np.arccos((coordInit_norm**2 + a**2 - c_norm**2)/(2*coordInit_norm*a)) 
+
+        if np.dot(self.coordInit, aVector) < 0:
+            phaseInit = 2*np.pi - np.arccos((coordInit_norm**2 + self.axe**2 - c_norm**2)/(2*coordInit_norm*self.axe)) 
         else : 
-            phaseInit = np.arccos((coordInit_norm**2 + a**2 - c_norm**2)/(2*coordInit_norm*a)) 
+            phaseInit = np.arccos((coordInit_norm**2 + self.axe**2 - c_norm**2)/(2*coordInit_norm*self.axe)) 
+
         return phaseInit    
 
-    def calcOrbit(self, time, coord_init):
-        phase = self.calcPhase(coord_init, self.axe)
+    def calcOrbit(self, time):
+        phase = self.calcPhase()
         for i in range(time.size):
             self.coord = np.array([self.u + self.axe * np.cos(self.omega * time[i] + phase), self.b * np.sin(self.omega * time[i] + phase)])
             self.orbit.append(self.coord)
@@ -135,14 +138,14 @@ perihelie = {"mercure" : 46e9, # m
 #             "uranus" : [perihelie["uranus"],0],
 #             "neptune" : [perihelie["neptune"],0]}
 
-coordInit = {"mercure" : [1.937084483054509e7, -6.513223219797295e7],
-            "venus" : [6.587993905568880e7,  8.521612947350608e7],
-            "terre" : [1.275455323133293e8, -8.268704863368241e7],
-            "mars" : [1.573602810589315e8,  1.510646771296409e8],
-            "jupiter" : [1.242608108828331e8,  7.509277058364266e8],
-            "saturne" : [-1.066162306225813e9,  8.642718550387603e8],
-            "uranus" : [-2.083061795972884e9, -1.842144607530773e9],
-            "neptune" : [-1.131835012683988e9*1e3, -4.386495519097997e9*1e3]}           
+coordInit = {"mercure" : [1.9379e10, -6.513e10],
+            "venus" : [6.588e10,  8.521612947350608e10],
+            "terre" : [1.275e11, -8.269e10],
+            "mars" : [1.573e11,  1.511e11],
+            "jupiter" : [1.243e11,  7.509e11],
+            "saturne" : [-1.066e12,  8.643e11],
+            "uranus" : [-2.083e12, -1.842e12],
+            "neptune" : [-1.132e12, -4.386e12]}           
 
 coordFinal = {"mercure" : [-5.709349323145684e7, -2.154788582251384e7], # 25 aout 1981
             "venus" : [-4.826049890952200e7, -9.585580109732188e7],
@@ -153,14 +156,14 @@ coordFinal = {"mercure" : [-5.709349323145684e7, -2.154788582251384e7], # 25 aou
             "uranus" : [-1.426015556248566e9, -2.428069102412113e9],
             "neptune" : [-4.591963134603668e8, -4.503837037318032e9]} 
 
-mercure = Planet("mercure", mass["mercure"], coordInit["mercure"], coordFinal["mercure"], a["mercure"], perihelie["mercure"], e["mercure"], radius["mercure"])
-venus = Planet("venus", mass["venus"], coordInit["venus"], coordFinal["venus"], a["venus"], perihelie["venus"], e["venus"], radius["venus"])
-terre = Planet("terre", mass["terre"], coordInit["terre"],coordFinal["terre"],  a["terre"], perihelie["terre"], e["terre"], radius["terre"])
-mars = Planet("mars", mass["mars"], coordInit["mars"],coordFinal["mars"],  a["mars"], perihelie["mars"], e["mars"], radius["mars"])
-jupiter = Planet("jupiter", mass["jupiter"], coordInit["jupiter"],coordFinal["jupiter"],  a["jupiter"], perihelie["jupiter"], e["jupiter"], radius["jupiter"])
-saturne = Planet("saturne", mass["saturne"], coordInit["saturne"],coordFinal["saturne"],  a["saturne"], perihelie["saturne"], e["saturne"], radius["saturne"])
-uranus = Planet("uranus", mass["uranus"], coordInit["uranus"], coordFinal["uranus"], a["uranus"], perihelie["uranus"], e["uranus"], radius["uranus"])
-neptune = Planet("neptune", mass["neptune"], coordInit["neptune"],coordFinal["neptune"], a["neptune"], perihelie["neptune"], e["neptune"], radius["neptune"])
+mercure = Planet("mercure", mass["mercure"], coordInit["mercure"], a["mercure"], perihelie["mercure"], e["mercure"], radius["mercure"])
+venus = Planet("venus", mass["venus"], coordInit["venus"],  a["venus"], perihelie["venus"], e["venus"], radius["venus"])
+terre = Planet("terre", mass["terre"], coordInit["terre"],  a["terre"], perihelie["terre"], e["terre"], radius["terre"])
+mars = Planet("mars", mass["mars"], coordInit["mars"],  a["mars"], perihelie["mars"], e["mars"], radius["mars"])
+jupiter = Planet("jupiter", mass["jupiter"], coordInit["jupiter"],  a["jupiter"], perihelie["jupiter"], e["jupiter"], radius["jupiter"])
+saturne = Planet("saturne", mass["saturne"], coordInit["saturne"],  a["saturne"], perihelie["saturne"], e["saturne"], radius["saturne"])
+uranus = Planet("uranus", mass["uranus"], coordInit["uranus"], a["uranus"], perihelie["uranus"], e["uranus"], radius["uranus"])
+neptune = Planet("neptune", mass["neptune"], coordInit["neptune"], a["neptune"], perihelie["neptune"], e["neptune"], radius["neptune"])
 
 planets = np.array([mercure, venus, terre, mars, jupiter, saturne, uranus, neptune])
 
