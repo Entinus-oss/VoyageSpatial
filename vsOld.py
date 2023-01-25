@@ -1,13 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import planetes as pl
-from planetes import planets
 
 G = 6.674*1e-11
 
 class Sonde():
 
-    def __init__(self, coord, speed, acc = [0, 0], mass=100):
+    def __init__(self, coord, speed, acc, mass=100):
         self.coord = np.array(coord)
         self.speed = np.array(speed)
         self.acc = np.array(acc)
@@ -46,9 +45,12 @@ class Sonde():
 
 
 def a(sondeCoord, planetArray):
+
     acceleration = 0
     for i in range(planetArray.size):
-        acceleration += G * planetArray[i].mass * x@
+        acceleration += G * planetArray[i].mass * (planetArray[i].coord - sondeCoord)/ np.linalg.norm(planetArray[i].coord - sondeCoord)**3
+    print(planetArray[i].coord)
+    return acceleration
 
 def leapfrog(u_ini, sonde, planetArray, T, h):
     N = int(T/h)
@@ -75,7 +77,6 @@ def leapfrog(u_ini, sonde, planetArray, T, h):
 
     planetOrbitArray = np.array(planetOrbitArray)
 
-    print(planetOrbitArray)
     for i in range(N-1):
 
         # Set planet coord at time i
@@ -119,12 +120,16 @@ def leapfrog(u_ini, sonde, planetArray, T, h):
     return t, u
 
 def tooClose(i, u, planetArray):
-    """ Check if the spacecraft is inside the raidus of a planet """
     for planet in planetArray:
         dist = np.linalg.norm(u[:2, i] - planet.coord)
         if dist <= planet.radius:
             return True
             
+
+massPlanet = {"Terre" : 1e24, "Lune" : 7.6e24} #kg
+dTerreLune = 3.84400 * 1e4 # m
+vMax = 1.7 * 1e4 # km/s
+
 
 day = 86400 # s
 hour = 3600 # s
@@ -138,16 +143,15 @@ def main():
 
     planetArray = np.array([terre])
 
-    R = 35000 * 1e3 # m
+    R = 35000 * 1e3 #m
     vyIni = np.sqrt(G * terre.mass / R)
     # sonde = Sonde([dTerreLune/2, 0], vMax * vDir, [0, 0])
 
     theta = np.pi / 2 # 0 < theta < 2 * np.pi
     vDir = np.array([np.cos(theta), -np.sin(theta)])
-    
-    sonde = Sonde([R, 0], [0, vyIni])
 
-    T = 1 * year 
+    sonde = Sonde([R, 0], [0, vyIni], [0, 0])
+    T = 1 * year# s
     h = hour # s
     N = int(T/h)
     init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
@@ -169,32 +173,17 @@ def main():
         ax.plot(planetArray[i].orbit[0, 0], planetArray[i].orbit[0, 1], 'ro', label="terre init")
         ax.plot(planetArray[i].orbit[-1, 0], planetArray[i].orbit[-1, 1], 'g*', label="terre end")
         ax.plot(planetArray[i].orbit[:, 0], planetArray[i].orbit[:, 1], label="terre orbite")
-        ax.plot(terre.radius * np.cos(r), terre.radius * np.sin(r), '--', label ="terre rayon")
+        ax.plot(terre.radius * np.cos(r - planetArray[i].orbit[-1, 0]), terre.radius * np.sin(r - planetArray[i].orbit[-1, 1]), '--', label ="terre rayon")
     print(planetArray[i].orbit[0, :], planetArray[i].coordInit)
     # print(planetArray[0].orbit[:, 0])
-    ax.plot(sonde.x, sonde.y, 'bo', label='sonde start')
+    ax.plot(u[0, 0], u[0, 0], 'bo', label='sonde start')
     ax.plot(u[0, -1], u[1, -1], 'b*', label='sonde end')
-    ax.plot(u[0, :], u[1, :], linewidth=0.1)
+    #ax.plot(u[0, :], u[1, :], linewidth=0.1)
     #ax.axis('equal')
     ax.set_xlabel("x [m]")
     ax.set_ylabel("y [m]")
     plt.legend()
     plt.show()
-
-    # Em = np.empty(t.size)
-
-    # for i in range(u.shape[1]):
-    #     sonde.coord = u[:2, i]
-    #     sonde.speed = u[2:4, i]
-    #     Em[i] = sonde.em(planetArray)
-
-    # diffRelatEm = 2 * np.abs(np.max(Em) - np.min(Em)) / np.abs(np.max(Em) + np.min(Em))
-    # print("Em_max / Em_min", diffRelatEm)
-    # plt.plot(t, Em, label="Em")
-
-    # plt.legend()
-    # plt.grid()
-    # plt.show()
 
     return 
 

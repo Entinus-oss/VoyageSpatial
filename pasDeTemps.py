@@ -1,10 +1,29 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from voyageSpatial import Planet, Sonde, leapfrog
+import planetes as pl
+
+G = 6.674*1e-11
+
+massPlanet = {"Terre" : 1e24, "Lune" : 7.6e24} #kg
+dTerreLune = 3.84400 * 1e4 # m
+vMax = 1.7 * 1e4 # km/s
+
+day = 86400 # s
+hour = 3600 # s
+minute = 60 # s
+year = 365 * day
+
 terre = Planet("terre", massPlanet["Terre"], [0, 0], pl.terre.radius)
-sonde = Sonde([R, 0], [0, vyIni], [0, 0])
+
+planetArray = np.array([terre])
 
 R = 35000 * 1e3 #m
 vyIni = np.sqrt(G * terre.mass / R)
 theta = np.pi / 2 # 0 < theta < 2 * np.pi
 vDir = np.array([np.cos(theta), -np.sin(theta)])
+
+sonde = Sonde([R, 0], [-1000, vyIni/2], [0, 0])
 
 init = [sonde.x, sonde.y, sonde.vx, sonde.vy]
 
