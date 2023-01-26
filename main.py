@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 M = 5.972e24
-m = 1
+m = 100
 G = 6.674*1e-11
 
 minute = 60 # s
@@ -10,8 +10,6 @@ hour = 60 * minute
 day = 24 * hour
 week = 7 * day
 year = 365 * day
-
-P = year
 
 def calculateEm(r, v, rPlanet):
     return 1/2 * m * np.linalg.norm(v)**2 - G * M * m / np.linalg.norm(rPlanet - r)
@@ -60,7 +58,7 @@ def leapfrog(u_ini, planet_orbit, t, h):
         if np.linalg.norm(planetCoord - u[:2, i+1]) <= MAX_RADIUS:
             print("Error : collision with planet's surface")
             u[:2, i+1] = u[:2, i]
-            return t, u
+            return t, u, em
 
     return t, u, em
 
@@ -73,20 +71,21 @@ def find_intersection(trajectory1, trajectory2, radius):
                 intersections.append((point1, point2))
     return intersections
 
-MAX_RADIUS = 6.3e3 # m
+MAX_RADIUS = 6.3e5 # m
 
-T =  10 * day
-dt = 50
+T = 1 * year
+dt = 10 * minute
 
 t = np.arange(0, T, dt)
-
+P = year * 3
+TS = 150e9
 R = 35000 * 1e3 # m
 vy0 = np.sqrt(G * M / R)
 
-planet_orbit = np.array([np.cos(2 * np.pi * t / P), np.sin(2 * np.pi * t / P)])
-# planet_orbit = np.array([np.linspace(0, 1e9, t.size), np.linspace(0, 1e9, t.size)])
+planet_orbit = np.array([TS * np.cos(2 * np.pi * t / P), TS * np.sin(2 * np.pi * t / P)])
+# planet_orbit = np.array([np.linspace(0, 1e6, t.size), np.linspace(0, 1e6, t.size)])
 
-u_ini =[R, 0, 0, vy0]
+u_ini =[R + TS, 0, 0, vy0 + TS * 2 * np.pi / P]
 t, u, em = leapfrog(u_ini, planet_orbit, t, dt)
 
 emRelatif = np.abs(2 * (np.max(em) - np.min(em)) / (np.max(em) + np.min(em)))
@@ -96,7 +95,7 @@ plt.plot(u[0, :], u[1, :], label = "sonde")
 plt.plot(u[0, 0], u[1, 0], 'bo', label = "sonde start")
 plt.plot(u[0, -1], u[1, -1], 'b*', label = "sonde end")
 
-# # Planet
+# Planet
 plt.plot(planet_orbit[0, :], planet_orbit[1, :], label = "planet")
 plt.plot(planet_orbit[0, 0], planet_orbit[1, 0], 'ro', label = "planet start")
 plt.plot(planet_orbit[0, -1], planet_orbit[1, -1], 'r*', label = "planet end")
@@ -107,7 +106,6 @@ plt.show()
 # Em
 plt.plot(t, em, '-', label="em")
 print(emRelatif)
-# plt.plot(t, emRelatif*np.ones(t.size), 'r--', label="em relatif")
 
 plt.legend()
 plt.show()
