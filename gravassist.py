@@ -62,44 +62,25 @@ def leapfrog(u_ini, planet_orbit, t, h):
 
     return t, u, em
 
-def find_intersection(trajectory1, trajectory2, radius):
-    intersections = []
-    for point1 in trajectory1:
-        for point2 in trajectory2:
-            distance = np.linalg.norm(point1 - point2)
-            if distance <= radius:
-                intersections.append((point1, point2))
-    return intersections
+MAX_RADIUS = 6.3e5
 
-MAX_RADIUS = 6.3e5 # m
+rayonSphereInfluence = 1e9 # m
+planetCoord = np.array([0,0])
+sondeInitCoord = np.array([0.5e9, -2e9]) #m
+sondeInitSpeed = np.array([0, 6e3 / 3600 * 1e3]) # m/s
 
-T = 1/3 * year 
-dt = 30
+u_ini = np.append(sondeInitCoord, sondeInitSpeed)
+
+T = year
+dt = hour
 
 t = np.arange(0, T, dt)
-P = year
-TS = 150e9
-R = 3.5e9 # m
-vy0 = np.sqrt(G * M / R)
 
-delta = minute
-x0, y0 = TS/2, 0
-coordInit = np.array([x0, y0])
-coordImpact = np.array([0, TS])
-d = TS/2
-V = np.linalg.norm(coordInit -coordImpact) /(P/4 + delta) #/ np.sqrt(2)
-print("Vitesse sonde:",V)
-Vdir = (np.array([0, TS]) - np.array([d, 0])) / np.linalg.norm(np.array([0, TS]) + np.array([d, 0])) * V
+planet_orbit = np.array([np.zeros([t.size, 2])])
+t,u,em = leapfrog(u_ini, planet_orbit, t, dt)
 
-planet_orbit = np.array([TS * np.cos(2 * np.pi * t / P), TS * np.sin(2 * np.pi * t / P)])
-# planet_orbit = np.array([np.linspace(0, 1e6, t.size), np.linspace(0, 1e6, t.size)])
-
-# u_ini =[R, 0, 0, vy0]
-u_ini =[x0, y0, Vdir[0], Vdir[1]]
-
-t, u, em = leapfrog(u_ini, planet_orbit, t, dt)
-
-emRelatif = np.abs(2 * (np.max(em) - np.min(em)) / (np.max(em) + np.min(em)))
+plt.plot(planetCoord[0], planetCoord[1], 'ro', label='planet')
+plt.plot(rayonSphereInfluence * np.cos(np.linspace(0, 2 * np.pi, 1000)) - planetCoord[0], rayonSphereInfluence * np.sin(np.linspace(0, 2 * np.pi, 1000)) - planetCoord[1], '--')
 
 # Sonde
 plt.plot(u[0, :], u[1, :], label = "sonde")
@@ -107,16 +88,15 @@ plt.plot(u[0, 0], u[1, 0], 'bo', label = "sonde start")
 plt.plot(u[0, -1], u[1, -1], 'b*', label = "sonde end")
 
 # Planet
-plt.plot(planet_orbit[0, :], planet_orbit[1, :], label = "planet")
-plt.plot(planet_orbit[0, 0], planet_orbit[1, 0], 'ro', label = "planet start")
-plt.plot(planet_orbit[0, -1], planet_orbit[1, -1], 'r*', label = "planet end")
+plt.plot(planet_orbit[:, 0], planet_orbit[:, 1], label = "planet")
+plt.plot(planet_orbit[0, 0], planet_orbit[0, 1], 'ro', label = "planet start")
+plt.plot(planet_orbit[-1, 0], planet_orbit[-1, 0], 'r*', label = "planet end")
 
-plt.xlim(-TS * 1.2, TS * 1.2)
-plt.ylim(-TS * 1.2, TS * 1.2)
 plt.legend()
 plt.show()
 
 # Em
+emRelatif = np.abs(2 * (np.max(em) - np.min(em)) / (np.max(em) + np.min(em)))
 plt.plot(t, em, '-', label="em")
 print(emRelatif)
 

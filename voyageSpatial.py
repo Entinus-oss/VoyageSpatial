@@ -48,7 +48,7 @@ class Sonde():
 def a(sondeCoord, planetArray):
     acceleration = 0
     for i in range(planetArray.size):
-        acceleration += G * planetArray[i].mass * x@
+        acceleration += G * planetArray[i].mass * x
 
 def leapfrog(u_ini, sonde, planetArray, T, h):
     N = int(T/h)
