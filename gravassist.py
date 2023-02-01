@@ -71,7 +71,7 @@ sondeInitSpeed = np.array([0, 6e3 / 3600 * 1e3]) # m/s
 
 u_ini = np.append(sondeInitCoord, sondeInitSpeed)
 
-T = year
+T = 100*year
 dt = hour
 
 t = np.arange(0, T, dt)

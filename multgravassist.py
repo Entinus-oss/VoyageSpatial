@@ -33,14 +33,18 @@ def leapfrog(u_ini, planetArray, t, h):
     c = np.array([w1 / 2, (w0 + w1) / 2, (w0 + w1) / 2, w1/2])
     d = np.array([w1, w0, w1])
 
-    em = np.zeros(t.size)
+    em = np.array([0])
     for planet in planetArray:
         em[0] += calculateEm(u[:2, 0], u[2:4, 0], planet.orbit[:, 0])
 
-    for i in range(N-1):
+    time = np.array([0])
+    i = 0
+    T = t[-1]
+    timeTracker = 0
+    while timeTracker <= T:
 
-        h = variableTimestep(i, h, u[:2, i], planetArray, week, hour)
-
+        h = variableTimestep(i, h, u[:2, i], planetArray, month, 10*minute, 1.10, 0.6)
+        time = np.append(time, h + time[-1])
         #4th order Yoshida integrator
         
         r1 = u[:2, i] + c[0] * u[2:4, i] * h
@@ -79,29 +83,35 @@ def leapfrog(u_ini, planetArray, t, h):
         uNew = np.array([[x], [y], [vx], [vy]])
         u = np.append(u, uNew, axis=1)
 
+        emTemp = 0
         for planet in planetArray:
-            em[i+1] += calculateEm(u[:2, i+1], u[2:4, i+1], planet.orbit[:, i+1])
+            emTemp += calculateEm(u[:2, i+1], u[2:4, i+1], planet.orbit[:, i+1])
+        em = np.append(em, emTemp)
     
-        print(i, "/", N-2, end="\r")
+        print(timeTracker, "/", T, end="\r")
 
         if np.linalg.norm(planetCoord - u[:2, i+1]) <= MAX_RADIUS:
-            print("Error : collision with planet's surface")
+            print("\nError : collision with planet's surface")
             u[:2, i+1] = u[:2, i]
             return t, u, em
 
-    return t, u, em
+        timeTracker += h
+        i += 1
 
-def variableTimestep(i, h, sondeCoord, planetArray, hMax, hMin):
+    print("\n")
+    return time, u, em
+
+def variableTimestep(i, h, sondeCoord, planetArray, hMax, hMin, upScale, downScale, hillSphereScaleFactor=3):
     newh = h
     for planet in planetArray:
-        threshold = 3 * planet.infRadius
+        threshold = hillSphereScaleFactor * planet.infRadius
 
         if np.linalg.norm(planet.orbit[:, i] - sondeCoord) <= threshold:
-            newh *= 0.5
+            newh *= downScale
             if newh < hMin:
                 newh = hMin
         else:
-            newh *= 1.10
+            newh *= upScale
             if newh > hMax:
                 newh = hMax
     return newh
@@ -128,7 +138,7 @@ sondeInitSpeed = np.array([0, 6e3 / 3600 * 1e3]) # m/s
 
 u_ini = np.append(sondeInitCoord, sondeInitSpeed)
 
-T = year
+T = 100*year
 dt = hour #10 * minute
 
 t = np.arange(0, T, dt)
@@ -139,7 +149,7 @@ planet_orbit2 = np.array([np.ones([t.size, 2]) * planet2Coord])
 planet = Planet(M, planet_orbit, rayonSphereHill)
 planet2 = Planet(M, planet_orbit2, rayonSphereHill)
 
-planetArray = np.array([planet, planet2])
+planetArray = np.array([planet,])
 t,u,em = leapfrog(u_ini, planetArray, t, dt)
 
 # Sonde
@@ -171,7 +181,7 @@ plt.show()
 # Em
 emRelatif = np.abs(2 * (np.max(em) - np.min(em)) / (np.max(em) + np.min(em)))
 plt.plot(t, em, '-', label="em")
-print(emRelatif)
+print("Em =", emRelatif)
 
 plt.legend()
 plt.show()
