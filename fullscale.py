@@ -43,7 +43,7 @@ def leapfrog(u_ini, planetArray, t, h):
     timeTracker = 0
     while timeTracker <= T:
 
-        h = np.floor(variableTimestep(i, h, u[:2, i], planetArray, month, 10*minute, 1.1, 0.7))
+        h = np.floor(variableTimestep(i, h, u[:2, i], planetArray, month, minute, 1.1, 0.7))
         time = np.append(time, h + time[-1])
         #4th order Yoshida integrator
         
@@ -131,15 +131,16 @@ rayonSphereHill = TS * (1-0.0167) * (M / Ms / 3)**(1/3)# m
 planetCoord = np.array([0,0])
 planet2Coord = np.array([-2.603e11, 3.9e11])
 
-influenceRadius = rayonSphereHill
-influenceRadius2 = rayonSphereHill
+vitesseSonde = 1666 # m/s
+sondeInitCoord = np.array([-5e8, -1e9]) #m
+sondeInitSpeed = np.array([1, 2]) / np.linalg.norm(np.array([1, 2])) * vitesseSonde
 
-sondeInitCoord = np.array([0.5e9, -2e9]) #m
-sondeInitSpeed = np.array([0, 6e3 / 3600 * 1e3]) # m/s
-
+vitesseTerre = 2978 # m/s
+timeImpact = np.linalg.norm(sondeInitCoord) / vitesseSonde
+distanceInitTerre = timeImpact * vitesseTerre
 u_ini = np.append(sondeInitCoord, sondeInitSpeed)
 
-T = 1*year
+T = month
 dt = 1 #10 * minute
 
 t = np.arange(0, T, dt)
@@ -148,28 +149,30 @@ P = year # period
 R = 2e9
 # planet_orbit = np.array([np.cos(2 * np.pi * t / P), np.sin(2 * np.pi * t / P)]).T * R
 # print("orbit\n", planet_orbit)
-planet_orbit = np.zeros([t.size, 2])
+# planet_orbit = np.zeros([t.size, 2])
+planet_orbit = np.array([np.linspace(-distanceInitTerre, t[-1]*vitesseTerre, t.size), np.zeros(t.size)]).T
+# print(planet_orbit)
 planet_orbit2 = np.ones([t.size, 2]) * planet2Coord
 
 planet = Planet(M, planet_orbit, rayonSphereHill)
 planet2 = Planet(M, planet_orbit2, rayonSphereHill)
 
-planetArray = np.array([planet, planet2])
+planetArray = np.array([planet,])
 time,u,em = leapfrog(u_ini, planetArray, t, dt)
 
 
 # Sonde
-plt.plot(u[0, :], u[1, :], '.-', label = "sonde")
-plt.plot(u[0, 0], u[1, 0], 'bo', label = "sonde start")
-plt.plot(u[0, -1], u[1, -1], 'b*', label = "sonde end")
+plt.plot(u[0, :], u[1, :], '-', label = "Trajectoire de la sonde")
+plt.plot(u[0, 0], u[1, 0], 'bo', label = "Position initiale de la sonde")
+# plt.plot(u[0, -1], u[1, -1], 'b*', label = "sonde end")
 
 # Planet
 for planet in planetArray:
-    plt.plot(planet_orbit[::100, 0], planet_orbit[::100, 1], label = "planet")
-    plt.plot(planet.orbit[0, 0], planet.orbit[0, 1], 'ro', label = "planet start")
-    plt.plot(planet.infRadius * np.cos(np.linspace(0, 2 * np.pi, 1000)) + planet.orbit[0, 0], planet.infRadius * np.sin(np.linspace(0, 2 * np.pi, 1000)) + planet.orbit[0, 1], 'r--')
+    plt.plot(planet_orbit[::100, 0], planet_orbit[::100, 1], label = "Trajectoire de la Terre")
+    plt.plot(planet.orbit[0, 0], planet.orbit[0, 1], 'ro', label = "Terre")
+    # plt.plot(MAX_RADIUS * np.cos(np.linspace(0, 2 * np.pi, 1000)) + planet.orbit[0, 0], MAX_RADIUS * np.sin(np.linspace(0, 2 * np.pi, 1000)) + planet.orbit[0, 1], 'r--', label="rayon")
 
-    # plt.plot(planet_orbit[-1, 0], planet_orbit[-1, 0], 'r*', label = "planet end")
+    plt.plot(planet_orbit[-1, 0], planet_orbit[-1, 1], 'r*', label = "Position finale de la planète")
 
 # # Planet2
 # # plt.plot(planet_orbit2[:, 0], planet_orbit2[:, 1], label = "planet2")
@@ -180,15 +183,35 @@ for planet in planetArray:
 # plt.plot(rayonSphereHill * np.cos(np.linspace(0, 2 * np.pi, 1000)) + planetCoord[0], rayonSphereHill * np.sin(np.linspace(0, 2 * np.pi, 1000)) + planetCoord[1], 'r--')
 # plt.plot(rayonSphereInfluence * np.cos(np.linspace(0, 2 * np.pi, 1000)) + planet2Coord[0], rayonSphereInfluence * np.sin(np.linspace(0, 2 * np.pi, 1000)) + planet2Coord[1], 'g--')
 
+plt.xlim(-1.2e9, 1.2e9)
+plt.ylim(-1.2e9, 1.2e9)
+plt.xlabel("x [m]")
+plt.ylabel("y [m]")
+
 ax = plt.gca()
 ax.set_aspect('equal', adjustable='box')
 plt.legend()
+plt.grid()
+plt.title("Fronde gravitationnelle dans le référenciel planétaire")
 plt.show()
 
 # Em
 emRelatif = np.abs(2 * (np.max(em) - np.min(em)) / (np.max(em) + np.min(em)))
-plt.plot(time, em, '-', label="em")
+# plt.plot(time, em, '-', label="em")
 print("Em =", emRelatif)
 
+# Sonde speed
+print(u[2:4], u[2, :], u[3, :])
+vx = u[2, :]
+vy = u[3, :]
+v = np.sqrt(np.power(vx, 2) + np.power(vy, 2))
+print(v)
+
+plt.plot(time, v, '-')
+plt.xlabel("t [s]")
+plt.ylabel("v [m/s]")
+
+plt.title("Évolution temporelle de la vitesse sur un an")
+plt.grid()
 plt.legend()
 plt.show()
