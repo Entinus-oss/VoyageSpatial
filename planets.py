@@ -1,11 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
-Ms = 1.989 * 1e30 # kg
-G = 6.674*1e-11
+
+Ms = 1.989 * 1e30 # masse du soleil (kg)
+G = 6.674*1e-11 # constante gravitaionnel
 
 class Planet():
 
     def __init__ (self, mass, orbit, hillSphereRadius, radius=0):
+        """
+        Classe "Planet" : permet d'accéder facilement aux attributs des planètes.
+        """
         self.mass=mass
         self.orbit=orbit
         self.raidus=radius
@@ -13,6 +17,11 @@ class Planet():
 
 def calculateInitialPhase(coordInit, a):
 
+        """
+        coordInit : np.array([x, y]) coordonnées initiales des planètes.
+        a : float (m) demi grand-axe des planètes
+        Calcule la phase initiale des planètes du système solaire par rapport à la date de lancer de Voyager 2.
+        """
         coordInitNorm = np.linalg.norm(coordInit)
         aNorm = np.linalg.norm(np.array([a, 0]))
         c = np.linalg.norm(coordInit - np.array([a, 0]))
@@ -28,6 +37,14 @@ def calculateInitialPhase(coordInit, a):
 
 def calculateOrbit(time, phaseInit, a, perihelie, e, mass):
 
+        """
+        time : np.array([0, ..., T]) timeline sur laquelle l'orbite des planètes est calculé
+        phaseInit : float phase initiale des planètes
+        a : float (m) demi grand-axe des planètes
+        périhélie : flaot (m) périhélie des planètes
+        e : flaot (m) eccentricité des planètes
+        mass : flaot (kg) masse des planètes
+        """
         u = - a + perihelie
         b = a * np.sqrt(1 - e**2)
         period = 2 * np.pi * np.sqrt(a**3 / (Ms + mass) / G)
@@ -118,6 +135,8 @@ phaseInit = {"mercure" : calculateInitialPhase(coordInit["mercure"], a["mercure"
             "uranus" : calculateInitialPhase(coordInit["uranus"], a["uranus"]),
             "neptune" : calculateInitialPhase(coordInit["neptune"], a["neptune"])}
 
+### Initialisation des variables de temps ###
+
 minute = 60 # s
 hour = 60 * minute
 day = 24 * hour
@@ -130,6 +149,7 @@ dt = 1 # s
 
 time = np.arange(0, T, dt)
 
+### Calcule des orbites ###
 orbit = {"mercure" : calculateOrbit(time, phaseInit["mercure"], a["mercure"], perihelie["mercure"], e["mercure"], mass["mercure"]), # m
         "venus" : calculateOrbit(time, phaseInit["venus"], a["venus"], perihelie["venus"], e["venus"], mass["venus"]),
         "terre" : calculateOrbit(time, phaseInit["terre"], a["terre"], perihelie["terre"], e["terre"], mass["terre"]),
@@ -139,6 +159,7 @@ orbit = {"mercure" : calculateOrbit(time, phaseInit["mercure"], a["mercure"], pe
         "uranus" : calculateOrbit(time, phaseInit["uranus"], a["uranus"], perihelie["uranus"], e["uranus"], mass["uranus"]),
         "neptune" : calculateOrbit(time, phaseInit["neptune"], a["neptune"], perihelie["neptune"], e["neptune"], mass["neptune"])}
 
+### Instance des objets "Planet" ###
 soleil = Planet(Ms, [0, 0], 0)
 terre = Planet(mass["terre"], orbit["terre"], hillSphereRadius["terre"])
 venus = Planet(mass["venus"], orbit["venus"], hillSphereRadius["venus"])
@@ -146,6 +167,8 @@ mars = Planet(mass["mars"], orbit["mars"], hillSphereRadius["mars"])
 
 planetArray = np.array([terre, venus, mars])
 
+
+### Affichage ####
 for planet in planetArray:
         plt.plot(planet.orbit[::100, 0], planet.orbit[::100, 1], 'r-', label = "planet")
         plt.plot(planet.orbit[0, 0], planet.orbit[0, 1], 'bo', label = "planet start")
